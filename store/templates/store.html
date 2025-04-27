@@ -348,10 +348,10 @@
                 <button type="submit" class="btn btn-primary">Submit Review</button>
             </form>
         </div>
-
+        
+        <h3>Product Review</h3>
         <!-- Review List -->
         <div id="reviews-list" class="reviews-list">
-            <h3>Product Review</h3>
             {% if reviews %}
                 {% for review in reviews %}
                 <div class="review" data-review-id="{{ review.id }}">
