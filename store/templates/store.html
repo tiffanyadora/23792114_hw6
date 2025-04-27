@@ -1,0 +1,509 @@
+{% load custom_filters %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }} - WildcatWear</title>
+    
+    <!-- Linking external stylesheets for FontAwesome icons and custom styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/utility-styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/store.css' %}">
+</head>
+<body>
+
+    <!-- Navbar with hamburger menu for mobile -->
+    <!-- The hamburger menu and search feature uses a hidden checkbox for toggle functionality without 
+     requiring JavaScript. Also, this can make it more accessible and lightweight for the site -->
+    <nav class="navbar d-flex justify-between flex-wrap align-center">
+        <input type="checkbox" id="navbar-toggle" class="navbar-toggle">
+        <label for="navbar-toggle" class="hamburger-menu">
+            <i class="fa-solid fa-bars"></i>
+        </label>
+        
+        <a href="{% url 'home' %}" class="logo-container d-flex flex-1 justify-center">
+            <img src="{% static 'images/wildcat-logo.png' %}" alt="WildcatWear Logo" class="logo">
+        </a>
+        
+        <div class="nav-links d-flex flex-1 justify-start">
+            <a href="#" class="nav-link mr-2 p-2">Shop</a>
+            <a href="#" class="nav-link mr-2 p-2">Collections</a>
+            <a href="#" class="nav-link mr-2 p-2">About</a>
+            <a href="#" class="nav-link mr-2 p-2" id="admin-tools"><i class="fa-solid fa-tools"></i> Add Product</a>
+        </div>
+        
+        <div class="nav-actions d-flex flex-1 align-center justify-end gap-4">
+            <!-- For the search form, I separated it into desktop and mobile search components. 
+                "search-container" is for Desktop, and "mobile-search-container" is for Mobile.
+                Both are using form action with 'GET' that directs to the Search Result page. -->
+            
+            <!-- 1. Desktop Search -->
+            <!-- Always visible in larger screen, but hidden in smaller screen.-->
+            <form action="{% url 'search' %}" method="GET" class="search-container d-flex align-center desktop-search">
+                <input type="text" name="query" class="search-input px-2" placeholder="Search products...">
+                <button type="submit" class="desktop-search-submit my-1 mr-2">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </form>
+    
+            <!-- 2. Mobile Search -->
+            <!-- Search fields expands to take up the full width of the navbar. 
+                There is a submit button as well as a "x" button to close on the right. -->
+            <div class="mobile-search-container">
+                <input type="checkbox" id="search-toggle" class="search-toggle">
+                <label for="search-toggle" class="search-icon-btn">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </label>
+                
+                <form action="{% url 'search' %}" method="GET" class="mobile-search-expanded">
+                    <input type="text" name="query" class="mobile-search-input px-2" placeholder="Search products...">
+                    <button type="submit" class="mobile-search-submit">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                    <label for="search-toggle" class="mobile-search-close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </label>
+                </form>
+            </div>
+
+            <a href="#" class="login-link d-flex align-center gap-1">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                <span class="login-text">Login</span>
+            </a>
+            <div class="cart-link d-flex align-center gap-1" id="cart-toggle">
+                <i class="fa-solid fa-shopping-cart"></i>
+                <span class="cart-count" id="cart-count">0</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Breadcrumb navigation for better user experience and SEO -->
+    <nav class="breadcrumb container pt-3 pb-0" aria-label="breadcrumb">
+        <ol class="d-flex flex-wrap gap-2 p-0 m-0">
+            <li class="d-flex align-center"><a href="{% url 'home' %}">Home</a></li>
+            <li class="d-flex align-center"><a href="#">{{ product.category }}</a></li>
+            <li class="d-flex align-center" aria-current="page">{{ product.name }}</li>
+        </ol>
+    </nav>
+    
+    <!-- Product Submission Modal -->
+    <div id="product-submission-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Add New Product</h2>
+            <form id="product-submission-form">
+                {% csrf_token %}
+                <label>
+                    Product Name:
+                    <input type="text" name="name" required>
+                </label>
+                
+                <label>
+                    Product Category:
+                    <select name="category" required>
+                        <option value="Apparel">Apparel</option>
+                        <option value="Accessories">Accessories</option>
+                        <option value="Gifts">Gifts</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </label>
+                
+                <label>
+                    Product Price:
+                    <input type="number" name="price" step="0.01" min="0" required>
+                </label>
+                
+                <label>
+                    Product Rating:
+                    <input type="number" name="rating" min="0" max="5" step="0.1" required>
+                </label>
+                
+                <label>
+                    Product Description:
+                    <textarea name="description" required></textarea>
+                </label>
+                
+                <label>
+                    Product Features (comma-separated):
+                    <input type="text" name="features" required>
+                </label>
+                
+                <label>
+                    Image Name:
+                    <input type="text" name="imageName" required placeholder="e.g., product1.jpg">
+                </label>
+
+                <label>
+                    Pokemon Mascot:
+                    <input type="text" name="pokemon" placeholder="e.g., pikachu">
+                </label>
+                
+                <label>
+                    Location:
+                    <input type="text" name="location" placeholder="e.g., Tucson, AZ">
+                </label>
+                
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn">Cancel</button>
+                    <button type="submit">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cart Dropdown -->
+    <div id="cart-dropdown" class="cart-dropdown">
+        <h3>Your Cart</h3>
+        <ul class="cart-items">
+            <!-- Cart items will be added here dynamically -->
+        </ul>
+        <div class="cart-summary">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span class="cart-total-amount">$0.00</span>
+            </div>
+            <a href="#" class="btn btn-primary checkout-btn">Checkout</a>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkout-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-checkout-modal">&times;</span>
+            <h2>Checkout</h2>
+            <form id="checkout-form">
+                <div class="form-group">
+                    <label for="full-name">Full Name</label>
+                    <input type="text" id="full-name" name="full_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="shipping-address">Shipping Address</label>
+                    <textarea id="shipping-address" name="shipping_address" rows="3" required></textarea>
+                </div>
+                
+                <div class="order-summary">
+                    <h3>Order Summary</h3>
+                    <ul id="order-items" class="order-items">
+                        <!-- Order items will be added here dynamically -->
+                    </ul>
+                    <div class="order-total">
+                        <span>Total:</span>
+                        <span id="order-total-amount">$0.00</span>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Complete Purchase</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Product Details Section -->
+    <section class="product-details container" data-product-id="{{ product.id }}">
+        <!-- Grid layout ensures responsive design and maintains spacing between image and product info -->
+        <div class="product-grid d-grid gap-5 mb-5">
+            
+            <!-- Product image -->
+            <div class="product-image d-flex flex-column gap-3">
+                <img src="{% static 'images/' %}{{ product.get_primary_image_name }}" alt="{{ product.name }}">
+            </div>
+
+            <!-- Product information -->
+            <div class="product-info d-flex flex-column gap-3">
+                <h1>{{ product.name }}</h1>
+
+                <div class="price-favorite-section">
+                    <!-- Product price -->
+                    <p class="product-price">${{ product.price }}</p>
+                    <!-- Favorite button -->
+                    <button class="favorite-btn d-none">
+                        <i class="fa-regular fa-heart"></i>
+                    </button>
+                </div>
+
+                <!-- Displaying star ratings dynamically -->
+                <div class="product-rating d-flex align-center">
+                    <!-- Display Solid star -->
+                    {% with ''|center:product.rating|slice:':5' as stars %}
+                        {% for _ in stars %}
+                            <i class="fa-solid fa-star"></i>
+                        {% endfor %}
+                    {% endwith %}
+                    
+                    <!-- Display half star if needed -->
+                    {% if product.rating|floatformat:1|slice:'-1:' >= '1' %}
+                        <i class="fa-solid fa-star-half-alt"></i>
+                    {% endif %}
+                    <span class="ml-2">{{ product.rating }}</span>
+                </div>
+
+                <!-- Product description with key features -->
+                <div class="product-description">
+                    <p>{{ product.description }}</p>
+                    <ul class="features-list my-3 mx-0 p-0">
+                        {% for feature in product_features %}
+                            <li class="d-flex align-center gap-2 mb-2">
+                                <i class="fa-solid fa-check"></i> {{ feature }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Size selection with buttons -->
+                <!-- This only show for products in category of "Apparel", other than that it will not be displayed.-->
+                {% if product.category|lower == 'apparel' %}
+                <div class="size-selector my-3 mx-0">
+                    <label for="size" class="mb-2">Select Size:</label>
+                    <select id="size" name="size">
+                        <option value="S">Small</option>
+                        <option value="M" selected>Medium</option>
+                        <option value="L">Large</option>
+                        <option value="XL">X-Large</option>
+                    </select>
+                </div>
+                {% endif %}
+
+                <form class="add-to-cart-form">
+                    <div class="quantity-control">
+                        <label for="quantity">Quantity:</label>
+                        <button type="button" class="quantity-btn minus">-</button>
+                        <input type="number" id="quantity" name="quantity" value="1" min="1">
+                        <button type="button" class="quantity-btn plus">+</button>
+                    </div>
+
+                    <!-- Add to cart button -->  
+                    <button type="submit" class="add-to-cart-btn btn btn-primary d-flex align-center justify-center gap-2 mt-5 p-5" data-product-id="{{ product.id }}">
+                        <i class="fa-solid fa-shopping-cart"></i>
+                        Add to Cart
+                    </button>
+                </form>
+
+                <div class="admin-actions">
+                    <button id="edit-product-btn" class="btn btn-secondary">Edit Product</button>
+                    <button id="delete-product-btn" class="btn btn-danger" data-product-id="{{ product.id }}">Delete Product</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Data Container for Pokémon & Weather -->
+    <div class="pokemon-weather-grid container d-grid grid-cols-2 gap-4">
+        <div id="pokemon-container" class="pokemon-data p-3">
+            <p>Loading Pokémon data...</p>
+        </div>
+
+        <div id="weather-container" class="weather-data p-3">
+            <p>Loading weather data...</p>
+        </div>
+    </div>
+
+    <!-- Review Section -->
+    <section class="reviews-section container mt-3">                    
+        <div class="add-review">
+            <h3>Write a Review</h3>
+
+            <!-- Review Form -->
+            <form id="review-form" data-product-id="{{ product.id }}">
+                <div class="form-group">
+                    <label for="username">Your Name</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="rating">Select Rating</label>
+                    <div class="rating-input">
+                        <input type="radio" id="star5" name="rating" value="5">
+                        <label for="star5">★</label>
+                    
+                        <input type="radio" id="star4" name="rating" value="4">
+                        <label for="star4">★</label>
+                    
+                        <input type="radio" id="star3" name="rating" value="3">
+                        <label for="star3">★</label>
+                    
+                        <input type="radio" id="star2" name="rating" value="2">
+                        <label for="star2">★</label>
+                    
+                        <input type="radio" id="star1" name="rating" value="1">
+                        <label for="star1">★</label>
+                    </div>                                                                           
+                </div>
+                
+                <div class="form-group">
+                    <label for="review-text">Review</label>
+                    <textarea id="review-text" name="comment" rows="4" required></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Submit Review</button>
+            </form>
+        </div>
+
+        <!-- Review List -->
+        <div id="reviews-list" class="reviews-list">
+            <h3>Product Review</h3>
+            {% if reviews %}
+                {% for review in reviews %}
+                <div class="review" data-review-id="{{ review.id }}">
+                    <div class="review-header">
+                        <h4>{{ review.username }}</h4>
+                        <div class="rating">
+                            {% for i in "12345" %}
+                            {% if forloop.counter <= review.rating %}
+                            ★
+                            {% else %}
+                            ☆
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="review-date">{{ review.created_at|date:"M d, Y" }}</span>
+                        <div class="review-actions">
+                            <button class="edit-review-btn" title="Edit review">
+                                <i class="fa-solid fa-edit"></i>
+                            </button>
+                            <button class="delete-review-btn" title="Delete review">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="review-content">
+                        <p>{{ review.comment }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="no-reviews">
+                <p>This product hasn't been reviewed yet. Be the first to write a review!</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Suggested Products Section -->
+    <section class="suggested-products container">
+        <h2 class="section-title my-5 pb-2">You May Also Like</h2>
+        
+        <!-- Grid layout for suggested products -->
+        <div class="suggestions-grid d-grid grid-cols-4 gap-4 mt-5">
+            {% for suggested_product in suggested_products %}
+                <a href="{% url 'product_detail' product_id=suggested_product.id %}" class="suggestion-card">
+                    <img src="{% static 'images/' %}{{ suggested_product.get_primary_image_name }}" alt="{{ suggested_product.name }}">
+                    <h3 class="py-2 px-3 m-0">{{ suggested_product.name }}</h3>
+                    <p class="price pt-0 pb-3 pl-3 m-0">${{ suggested_product.price }}</p>
+                </a>            
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Footer -->
+     <!-- This section provides links to Terms, Privacy, Accessibility as well as copyright information. -->
+     <footer class="footer pt-4">
+        <div class="footer-bottom mt-5 py-3 d-flex justify-between align-center flex-wrap gap-3">
+            <div class="footer-links d-flex gap-4">
+                <a href="#">Terms of Use</a>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Accessibility</a>
+            </div>
+            <p class="copyright mb-0">© WildcatWear 2025. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    {% block extra_js %}
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Product image gallery
+        const thumbnails = document.querySelectorAll('.thumbnail');
+        const mainImage = document.getElementById('main-product-image');
+        
+        thumbnails.forEach(thumbnail => {
+            thumbnail.addEventListener('click', () => {
+                const imgSrc = thumbnail.dataset.image;
+                mainImage.src = imgSrc;
+                thumbnails.forEach(t => t.classList.remove('active'));
+                thumbnail.classList.add('active');
+            });
+        });
+        
+        // Quantity controls
+        const quantityInput = document.getElementById('quantity');
+        const minusBtn = document.querySelector('.quantity-btn.minus');
+        const plusBtn = document.querySelector('.quantity-btn.plus');
+        
+        minusBtn.addEventListener('click', () => {
+            const currentValue = parseInt(quantityInput.value);
+            if (currentValue > 1) {
+                quantityInput.value = currentValue - 1;
+            }
+        });
+        
+        plusBtn.addEventListener('click', () => {
+            const currentValue = parseInt(quantityInput.value);
+            quantityInput.value = currentValue + 1;
+        });
+        
+        // Add to cart form
+        const addToCartForm = document.querySelector('.add-to-cart-form');
+        addToCartForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const productId = document.querySelector('.add-to-cart-btn').dataset.productId;
+            const quantity = parseInt(quantityInput.value);
+            const sizeSelect = document.getElementById('size');
+            const size = sizeSelect ? sizeSelect.value : null;
+            
+            window.cartManager.addToCart(productId, quantity, size);
+        });
+        
+        // Product tabs
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.dataset.tab;
+                
+                // Remove active class from all buttons and contents
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding content
+                button.classList.add('active');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+        
+        // Setup Add to Cart buttons for suggested products
+        const addToCartButtons = document.querySelectorAll('.product-grid .btn-add-to-cart');
+        addToCartButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                const productId = button.dataset.productId;
+                window.cartManager.addToCart(productId, 1);
+            });
+        });
+    });
+    </script>
+    {% endblock %}
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="{% static 'js/product-data.js' %}"></script>
+    <script src="{% static 'js/search.js' %}"></script>
+    <script src="{% static 'js/product-api.js' %}"></script>
+    <script src="{% static 'js/review-system.js' %}"></script>
+    <script src="{% static 'js/like-system.js' %}"></script>
+    <script src="{% static 'js/product-navigation.js' %}"></script>
+    <script src="{% static 'js/api-service.js' %}"></script>
+    <script src="{% static 'js/cart-manager.js' %}"></script>
+    <script src="{% static 'js/admin-tools.js' %}"></script>
+
+</body>
+</html>

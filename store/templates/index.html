@@ -1,0 +1,428 @@
+{% load custom_filters %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- For this assignment, I am creating an online store that sells University of Arizona's Official Merchandise. 
+     This is the main page of the Website - I am choosing "WildCatWear" as the site name.-->
+    <title>WildcatWear - UA Merchandise Store</title>
+
+    <!-- Link to CSS-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/utility-styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body>
+    <!-- Navbar with hamburger menu for mobile -->
+    <!-- The hamburger menu and search feature uses a hidden checkbox for toggle functionality without 
+     requiring JavaScript. Also, this can make it more accessible and lightweight for the site -->
+    <nav class="navbar d-flex justify-between flex-wrap align-center">
+        <input type="checkbox" id="navbar-toggle" class="navbar-toggle">
+        <label for="navbar-toggle" class="hamburger-menu">
+            <i class="fa-solid fa-bars"></i>
+        </label>
+
+        <a href="{% url 'home' %}" class="logo-container d-flex flex-1 justify-center">
+            <img src="{% static 'images/wildcat-logo.png' %}" alt="WildcatWear Logo" class="logo">
+        </a>
+
+        <div class="nav-links d-flex flex-1 justify-start">
+            <a href="index.html" class="nav-link mr-2 p-2">Shop</a>
+            <a href="#" class="nav-link mr-2 p-2">Collections</a>
+            <a href="#" class="nav-link mr-2 p-2">About</a>
+            <a href="#" class="nav-link mr-2 p-2" id="admin-tools"><i class="fa-solid fa-tools"></i> Add Product</a>
+            </div>
+        </div>
+
+        <div class="nav-actions d-flex flex-1 align-center justify-end gap-4">
+            <!-- For the search form, I separated it into desktop and mobile search components. 
+                "search-container" is for Desktop, and "mobile-search-container" is for Mobile.
+                Both are using form action with 'GET' that directs to the Search Result page. -->
+
+            <!-- 1. Desktop Search -->
+            <!-- Always visible in larger screen, but hidden in smaller screen.-->
+            <form action="{% url 'search' %}" method="GET" class="search-container d-flex align-center desktop-search">
+                <input type="text" name="query" class="search-input px-2" placeholder="Search products...">
+                <button type="submit" class="desktop-search-submit my-1 mr-2">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+            </form>
+
+            <!-- 2. Mobile Search -->
+            <!-- Search fields expands to take up the full width of the navbar. 
+                There is a submit button as well as a "x" button to close on the right. -->
+            <div class="mobile-search-container">
+                <input type="checkbox" id="search-toggle" class="search-toggle">
+                <label for="search-toggle" class="search-icon-btn">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </label>
+
+                <form action="{% url 'search' %}" method="GET" class="mobile-search-expanded">
+                    <input type="text" name="query" class="mobile-search-input px-2" placeholder="Search products...">
+                    <button type="submit" class="mobile-search-submit">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                    <label for="search-toggle" class="mobile-search-close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </label>
+                </form>
+            </div>
+
+            <a href="#" class="login-link d-flex align-center gap-1">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                <span class="login-text">Login</span>
+            </a>
+            <div class="cart-link d-flex align-center gap-1" id="cart-toggle">
+                <i class="fa-solid fa-shopping-cart"></i>
+                <span class="cart-count" id="cart-count">0</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Product Submission Modal -->
+    <div id="product-submission-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Add New Product</h2>
+            <form id="product-submission-form">
+                {% csrf_token %}
+                <label>
+                    Product Name:
+                    <input type="text" name="name" required>
+                </label>
+                
+                <label>
+                    Product Category:
+                    <select name="category" required>
+                        <option value="Apparel">Apparel</option>
+                        <option value="Accessories">Accessories</option>
+                        <option value="Gifts">Gifts</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </label>
+                
+                <label>
+                    Product Price:
+                    <input type="number" name="price" step="0.01" min="0" required>
+                </label>
+                
+                <label>
+                    Product Rating:
+                    <input type="number" name="rating" min="0" max="5" step="0.1" required>
+                </label>
+                
+                <label>
+                    Product Description:
+                    <textarea name="description" required></textarea>
+                </label>
+                
+                <label>
+                    Product Features (comma-separated):
+                    <input type="text" name="features" required>
+                </label>
+                
+                <label>
+                    Image Name:
+                    <input type="text" name="imageName" required placeholder="e.g., product1.jpg">
+                </label>
+
+                <label>
+                    Pokemon Mascot:
+                    <input type="text" name="pokemon" placeholder="e.g., pikachu">
+                </label>
+                
+                <label>
+                    Location:
+                    <input type="text" name="location" placeholder="e.g., Tucson, AZ">
+                </label>
+                
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn">Cancel</button>
+                    <button type="submit">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cart Dropdown -->
+    <div id="cart-dropdown" class="cart-dropdown">
+        <h3>Your Cart</h3>
+        <ul class="cart-items">
+            <!-- Cart items will be added here dynamically -->
+        </ul>
+        <div class="cart-summary">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span class="cart-total-amount">$0.00</span>
+            </div>
+            <a href="#" class="btn btn-primary checkout-btn">Checkout</a>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkout-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-checkout-modal">&times;</span>
+            <h2>Checkout</h2>
+            <form id="checkout-form">
+                <div class="form-group">
+                    <label for="full-name">Full Name</label>
+                    <input type="text" id="full-name" name="full_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="shipping-address">Shipping Address</label>
+                    <textarea id="shipping-address" name="shipping_address" rows="3" required></textarea>
+                </div>
+                
+                <div class="order-summary">
+                    <h3>Order Summary</h3>
+                    <ul id="order-items" class="order-items">
+                        <!-- Order items will be added here dynamically -->
+                    </ul>
+                    <div class="order-total">
+                        <span>Total:</span>
+                        <span id="order-total-amount">$0.00</span>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Complete Purchase</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <!-- This is the primary banner that welcomes the visitors and give them overview about the site with a large hero image as the background. 
+     For the heading, I used a tagline and a CTA button is also used for engaging visitors to explore products.-->
+    <header class="hero" style="background-image: url('{% static "images/home-hero.jpg" %}');">
+        <div class="hero-content mx-auto my-x px-3 py-0">
+            <h1 class="mb-3">Show Your Wildcat Pride</h1>
+            <p class="mb-5">Official University of Arizona merchandise for students, alumni, and fans</p>
+            <a href="#" class="btn btn-primary">Shop Now</a>
+        </div>
+    </header>
+
+    <!-- Shop by Categories Section -->
+    <!-- Makes it easy to customers can shop merch products based on Categories: Apparel, Accessories, Gifts, etc-->
+    <section class="featured-categories container">
+        <h2 class="section-title my-5 pb-2">Shop by Category</h2>
+        <div class="category-grid d-grid grid-cols-4 gap-4">
+            {% for category, image in categories.items %}
+            <a href="{% url 'home' %}?category={{ category }}" class="category-card">
+                <img src="{% static 'images/' %}{{ image }}" alt="UA {{ category }}">
+                <h3 class="p-3 mb-0">{{ category }}</h3>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Featured Products Section-->
+    <!-- This section showcases the featured products using a flexible layout so that it can adjust according to the number of items shown.
+     The prices and ratings are included on the cards as customers look for them before viewing product details. -->
+     <section class="featured-products container">
+        <h2 class="section-title my-5 pb-2">
+            {% if selected_category %}
+                Showing products in: <strong>{{ selected_category }}</strong>
+            {% else %}
+                Featured Products
+            {% endif %}
+        </h2>
+    
+        <div class="product-flex d-flex flex-wrap gap-4 justify-center">
+            {% for product in products %}
+            <a href="{% url 'product_detail' product_id=product.id %}" class="product-card">
+                <div class="product-image">
+                    <img src="{% static 'images/' %}{{ product.get_primary_image_name }}" alt="{{ product.name }}">
+                </div>
+                <div class="product-info p-3">
+                    <h3 class="mb-1">{{ product.name }}</h3>
+                    <p class="product-price">${{ product.price }}</p>
+                    <div class="product-rating d-flex align-center mb-1">
+                        {% with ''|center:product.rating|slice:':5' as stars %}
+                        {% for _ in stars %}
+                        <i class="fa-solid fa-star"></i>
+                        {% endfor %}
+                        {% endwith %}
+    
+                        {% if product.rating|floatformat:1|slice:'-1:' >= '1' %}
+                        <i class="fa-solid fa-star-half-alt"></i>
+                        {% endif %}
+                        <span class="ml-1">{{ product.rating }}</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <p>No products found in this category.</p>
+            {% endfor %}
+        </div>
+    
+        <div class="view-all-container mt-5">
+            <a href="{% url 'home' %}" class="btn btn-secondary">View All Products</a>
+        </div>
+    </section>
+
+    <!-- Mixed Media Content Section -->
+    <!-- Highlights a themed collection (e.g., Game Day) with a mix of text, images, and a call-to-action.  
+     Nested divs are used with a flexible layout with a text + wordmark icon on the left and a large image on the right -->
+    <section class="promo-section container">
+        <h2 class="section-title my-5 pb-2">Game Day Collection</h2>
+        <div class="promo-content d-flex gap-5">
+            <div class="promo-image-text d-flex flex-1 flex-column align-start justify-center gap-4">
+                <div class="small-image">
+                    <img class="full-width" src="{% static 'images/bear-down.png' %}" alt="Bear Down Wordmark">
+                </div>
+                <div class="promo-text p-5">
+                    <h3 class="mb-3">Get Ready for <strong>Game Day</strong></h3>
+                    <p>Show your Wildcat pride with our new collection of game day essentials. From jerseys to face
+                        paint, we've got everything you need to support the team!</p>
+                    <a href="#" class="btn btn-primary">Shop Collection</a>
+                </div>
+            </div>
+            <div class="large-image-container flex-2">
+                <div class="large-image">
+                    <img class="full-width" src="{% static 'images/gameday.jpg' %}" alt="UA Game Day Collection">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Four Box Section -->
+    <!-- Displays key selling points (Shipping, Quality, Returns, Support) in a structured grid layout.  
+     Uses icons and brief descriptions for quick readability and customer's trust & confidence -->
+
+    <section class="info-boxes container d-grid grid-cols-4 gap-4">
+        <div class="info-box p-5">
+            <i class="fa-solid fa-truck-fast mb-3"></i>
+            <h3 class="mb-3">Free Shipping</h3>
+            <p class="m-0">On orders over $50</p>
+        </div>
+        <div class="info-box p-5">
+            <i class="fa-solid fa-medal mb-3"></i>
+            <h3 class="mb-3">Quality Guarantee</h3>
+            <p class="m-0">Official UA merchandise</p>
+        </div>
+        <div class="info-box p-5">
+            <i class="fa-solid fa-rotate-left mb-3"></i>
+            <h3 class="mb-3">Easy Returns</h3>
+            <p class="m-0">30-day return policy</p>
+        </div>
+        <div class="info-box p-5">
+            <i class="fa-solid fa-headset mb-3"></i>
+            <h3 class="mb-3">Support</h3>
+            <p class="m-0">24/7 customer service</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <!-- This section provides links to Terms, Privacy, Accessibility as well as copyright information. -->
+
+    <footer class="footer pt-4">
+        <div class="footer-bottom mt-5 py-3 d-flex justify-between align-center flex-wrap gap-3">
+            <div class="footer-links d-flex gap-4">
+                <a href="#">Terms of Use</a>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Accessibility</a>
+            </div>
+            <p class="copyright mb-0">© WildcatWear 2025. All rights reserved.</p>
+        </div>
+    </footer>
+
+    {% block extra_js %}
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Product image gallery
+        const thumbnails = document.querySelectorAll('.thumbnail');
+        const mainImage = document.getElementById('main-product-image');
+        
+        thumbnails.forEach(thumbnail => {
+            thumbnail.addEventListener('click', () => {
+                const imgSrc = thumbnail.dataset.image;
+                mainImage.src = imgSrc;
+                thumbnails.forEach(t => t.classList.remove('active'));
+                thumbnail.classList.add('active');
+            });
+        });
+        
+        // Quantity controls
+        const quantityInput = document.getElementById('quantity');
+        const minusBtn = document.querySelector('.quantity-btn.minus');
+        const plusBtn = document.querySelector('.quantity-btn.plus');
+        
+        minusBtn.addEventListener('click', () => {
+            const currentValue = parseInt(quantityInput.value);
+            if (currentValue > 1) {
+                quantityInput.value = currentValue - 1;
+            }
+        });
+        
+        plusBtn.addEventListener('click', () => {
+            const currentValue = parseInt(quantityInput.value);
+            quantityInput.value = currentValue + 1;
+        });
+        
+        // Add to cart form
+        const addToCartForm = document.querySelector('.add-to-cart-form');
+        addToCartForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const productId = document.querySelector('.add-to-cart-btn').dataset.productId;
+            const quantity = parseInt(quantityInput.value);
+            const sizeSelect = document.getElementById('size');
+            const size = sizeSelect ? sizeSelect.value : null;
+            
+            window.cartManager.addToCart(productId, quantity, size);
+        });
+        
+        // Product tabs
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.dataset.tab;
+                
+                // Remove active class from all buttons and contents
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding content
+                button.classList.add('active');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+        
+        // Setup Add to Cart buttons for suggested products
+        const addToCartButtons = document.querySelectorAll('.product-grid .btn-add-to-cart');
+        addToCartButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                const productId = button.dataset.productId;
+                window.cartManager.addToCart(productId, 1);
+            });
+        });
+    });
+    </script>
+    {% endblock %}
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="{% static 'js/product-data.js' %}"></script>
+    <script src="{% static 'js/search.js' %}"></script>
+    <script src="{% static 'js/product-api.js' %}"></script>
+    <script src="{% static 'js/product-navigation.js' %}"></script>
+    <script src="{% static 'js/api-service.js' %}"></script>
+    <script src="{% static 'js/cart-manager.js' %}"></script>
+    <script src="{% static 'js/admin-tools.js' %}"></script>
+</body>
+
+</html>
